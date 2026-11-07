@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36811.4 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureRagAPI", "AzureRagAPI.csproj", "{1E03A062-1522-C0BE-B111-D395CCCE3DEB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E03A062-1522-C0BE-B111-D395CCCE3DEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E03A062-1522-C0BE-B111-D395CCCE3DEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E03A062-1522-C0BE-B111-D395CCCE3DEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E03A062-1522-C0BE-B111-D395CCCE3DEB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A562D08-FDA8-49A0-B90F-5C20DF714E75}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,13 @@
+1) Create search service (https://portal.azure.com/?utm_source=chatgpt.com#create/Microsoft.Search)
+   after creation service (https://ai-search-service-mak.search.windows.net)
+2) Add models in Azure Foundry (text-embedding-3-small for embedding & LLM :- gpt-5-mini
+3) Create API 
+	a) dotnet new webapi -n AzureRagAPI -f net8.0 
+	b) cd AzureRagAPI
+	c) Install the packages
+		dotnet add package OpenAI --version 2.14.0
+		dotnet add package Microsoft.SemanticKernel --version 1.81.0
+		dotnet add package Azure.Search.Documents --version 11.7.0
+		dotnet add package UglyToad.PdfPig --version 1.7.0-custom-5
+		dotnet add package DocumentFormat.OpenXml --version 3.3.0
+		
