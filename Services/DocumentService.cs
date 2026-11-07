@@ -1,6 +1,7 @@
 ﻿using AzureRagAPI.Models;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using System.Text;
 using UglyToad.PdfPig;
 
 namespace AzureRagAPI.Services;
@@ -103,41 +104,77 @@ public sealed class DocumentService
             .InnerText ?? string.Empty;
     }
 
-    private static List<string> SplitText(
-        string text,
-        int chunkSize = 500,
-        int overlap = 100)
+    public static List<string> SplitText(
+    string text,
+    int chunkSize = 2000)
     {
+        var paragraphs = text.Split(
+            new[] { "\r\n", "\n" },
+            StringSplitOptions.RemoveEmptyEntries);
+
         var chunks = new List<string>();
+        var currentChunk = new StringBuilder();
 
-        text = text
-            .Replace("\r", " ")
-            .Replace("\n", " ")
-            .Trim();
-
-        int start = 0;
-
-        while (start < text.Length)
+        foreach (var paragraph in paragraphs)
         {
-            int length = Math.Min(
-                chunkSize,
-                text.Length - start);
+            string cleaned = paragraph.Trim();
 
-            string chunk = text
-                .Substring(start, length)
-                .Trim();
+            if (string.IsNullOrWhiteSpace(cleaned))
+                continue;
 
-            if (!string.IsNullOrWhiteSpace(chunk))
+            if (currentChunk.Length + cleaned.Length > chunkSize
+                && currentChunk.Length > 0)
             {
-                chunks.Add(chunk);
+                chunks.Add(currentChunk.ToString().Trim());
+                currentChunk.Clear();
             }
 
-            if (start + length >= text.Length)
-                break;
+            if (currentChunk.Length > 0)
+                currentChunk.AppendLine();
 
-            start += chunkSize - overlap;
+            currentChunk.Append(cleaned);
         }
+
+        if (currentChunk.Length > 0)
+            chunks.Add(currentChunk.ToString().Trim());
 
         return chunks;
     }
+    //private static List<string> SplitText(
+    //    string text,
+    //    int chunkSize = 500,
+    //    int overlap = 100)
+    //{
+    //    var chunks = new List<string>();
+
+    //    text = text
+    //        .Replace("\r", " ")
+    //        .Replace("\n", " ")
+    //        .Trim();
+
+    //    int start = 0;
+
+    //    while (start < text.Length)
+    //    {
+    //        int length = Math.Min(
+    //            chunkSize,
+    //            text.Length - start);
+
+    //        string chunk = text
+    //            .Substring(start, length)
+    //            .Trim();
+
+    //        if (!string.IsNullOrWhiteSpace(chunk))
+    //        {
+    //            chunks.Add(chunk);
+    //        }
+
+    //        if (start + length >= text.Length)
+    //            break;
+
+    //        start += chunkSize - overlap;
+    //    }
+
+    //    return chunks;
+    //}
 }

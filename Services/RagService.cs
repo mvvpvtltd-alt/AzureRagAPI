@@ -2,8 +2,11 @@
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using AzureRagAPI.Models;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Spreadsheet;
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Security.Policy;
 using System.Text.Json;
 
 namespace AzureRagAPI.Services;
@@ -20,7 +23,7 @@ public sealed class RagService
         EmbeddingService embeddingService,
         SearchService searchService,
         HttpClient httpClient,
-        IConfiguration configuration, 
+        IConfiguration configuration,
         ILogger<RagService> logger)
     {
         _embeddingService = embeddingService;
@@ -34,6 +37,10 @@ public sealed class RagService
         string question,
         CancellationToken cancellationToken = default)
     {
+        int inputTokens = 0;
+        int outputTokens = 0;
+        int totalTokens = 0;
+
         await _searchService.CreateIndexIfNotExistsAsync();
 
         //Measure the complete RAG pipeline
@@ -70,7 +77,7 @@ public sealed class RagService
             //{
             //    Answer = "No documents uploaded."
             //};
-  
+
             // 3. Build context.
             context = string.Join(
                 "\n\n",
@@ -79,60 +86,50 @@ public sealed class RagService
                     $"Content: {document.Content}"));
         }
 
-        // 4. Construct grounded prompt.
-        string prompt = $"""
-        You are a document question-answering and AI assistant.
+        //4.Construct grounded prompt.
+        //string prompt1 = $"""
+        //You are a document question-answering and AI assistant.
 
-        If relevant document context is provided:
-        - Answer using the supplied context.
-        - Do not invent facts.
-        - Cite the source document.
+        //If relevant document context is provided:
+        //- Answer using the supplied context.
+        //- Do not invent facts.
+        //- Cite the source document.
 
-        If no relevant context is provided:
-        - Answer using general knowledge.
-        - Clearly state that the answer is not based on uploaded documents.
+        //If no relevant context is provided:
+        //- Answer using general knowledge.
+        //- Clearly state that the answer is not based on uploaded documents.
 
-        If information is insufficient:
-        - Say that sufficient information is unavailable.
-
-        CONTEXT:
-        {context}
-
-        USER QUESTION:
-        {question}
-        """;
-
-        //string prompt = $"""
-        //You are an AI assistant powered by a Retrieval-Augmented Generation (RAG) system.
-
-        //Follow these rules:
-
-        //1. When relevant document context is provided:
-        //   - Answer using only the relevant supplied document content.
-        //   - Ignore unrelated documents and irrelevant context.
-        //   - Combine information from multiple relevant chunks when necessary.
-        //   - Do not invent missing policy details.
-        //   - Provide a clear, structured and comprehensive answer.
-        //   - Cite the source document and section wherever available.
-
-        //2. When no relevant document context is available:
-        //   - Answer using general knowledge.
-        //   - Clearly state that the answer is not based on uploaded documents.
-
-        //3. When relevant context exists but does not contain sufficient information:
-        //   - Clearly identify what information is unavailable.
-        //   - Do not fill gaps with assumptions.
-
-        //4. Keep answers concise but sufficiently detailed to address the user's question.
-
-        //5. Never claim that a document contains information that is not present in the supplied context.
-
+        //If information is insufficient:
+        //- Say that sufficient information is unavailable.
         //CONTEXT:
         //{context}
 
         //USER QUESTION:
         //{question}
         //""";
+
+        string prompt = $"""
+            You are a concise, document-grounded RAG assistant.
+            Rules:
+            1.Answer directly using relevant retrieved context.
+            2.Never invent facts, numbers or citations.
+            3.Combine relevant chunks; ignore irrelevant or duplicate content.
+            4.Calculate totals only when all required values are available.
+            5.Identify missing or conflicting information.
+            6.Cite document name and PDF page number when available.
+            7.Never assume missing retrieved information is absent from the full document.
+            8.If no relevant context exists, use general knowledge only when permitted and disclose that documents were not used.
+            9.If evidence is insufficient, say so.
+
+            Return only a concise final answer. 
+            CONTEXT:
+            {context}
+
+            USER QUESTION:
+            {question}
+            """;
+
+
         _logger.LogInformation(prompt);
 
         // 5. Call GPT-5.5.
@@ -187,11 +184,11 @@ public sealed class RagService
 
         if (json.RootElement.TryGetProperty("usage", out var usage))
         {
-            int inputTokens = usage.GetProperty("prompt_tokens").GetInt32();
+            inputTokens = usage.GetProperty("prompt_tokens").GetInt32();
 
-            int outputTokens = usage.GetProperty("completion_tokens").GetInt32();
+            outputTokens = usage.GetProperty("completion_tokens").GetInt32();
 
-            int totalTokens = usage.GetProperty("total_tokens").GetInt32();
+            totalTokens = usage.GetProperty("total_tokens").GetInt32();
 
             _logger.LogInformation(
                 "GPT Token Usage: Input={InputTokens}, Output={OutputTokens}, Total={TotalTokens}",
@@ -223,7 +220,10 @@ public sealed class RagService
         return new AskResponse
         {
             Answer = answer,
-            Sources = sources
+            Sources = sources,
+            InputToken = inputTokens,
+            OutputToken = outputTokens,
+            TotalToken = totalTokens
         };
     }
 
